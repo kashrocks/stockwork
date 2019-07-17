@@ -35,6 +35,7 @@ def get_prcnt_change(ticker, data):
         print("Current time: " + all_keys[-1])
         rec_price = data["Time Series (" + TIME_INTERVAL + ")"][all_keys[-1]]["4. close"]
     else:
+        print('DELETE THIS AFTER')
         print("Current time: " + c_time_text)
         rec_price = data["Time Series (" + TIME_INTERVAL + ")"][c_time_text]["4. close"]
     last_price = data["Time Series (" + TIME_INTERVAL + ")"][l_time_text]["4. close"]
