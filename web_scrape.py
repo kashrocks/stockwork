@@ -8,7 +8,8 @@ API_KEY = "CU6GB0TZL1ZURLJY"
 TIME_INTERVAL_TIME = 1
 TIME_INTERVAL = str(TIME_INTERVAL_TIME) + "min"
 FUNCS = ["GLOBAL_QUOTE", "TIME_SERIES_INTRADAY"]
-TICKERS = ["GOOGL", "SNAP", "BYND"]
+TICKERS = ["MTLO.V"]
+
 
 def get_prcnt_change(ticker, data):
 
@@ -44,9 +45,9 @@ def get_prcnt_change(ticker, data):
     print('This is rec_price: ' + rec_price)
     print('This is last_price: ' + last_price)
 
-    prcnt_change = round(((1 - float(rec_price) / float(last_price)) * 100), 2)
-    print(ticker + ' has a percent change of: ' +
-          str(prcnt_change) + '% in the last ' + TIME_INTERVAL)
+    diff = float(rec_price) - float(last_price)
+    prcnt_change = round(((diff / float(last_price)) * 100), 2)
+    print(ticker + ' has a percent change of: ' + str(prcnt_change) + '% in the last ' + TIME_INTERVAL)
     print("")
 
 
@@ -56,68 +57,81 @@ def get_prcnt_change_new(ticker, data):
     if len(all_keys) == 1:
         return
 
-    rec_price = data["Time Series (" + TIME_INTERVAL + ")"][all_keys[-1]]["4. close"]
-    last_price = data["Time Series (" + TIME_INTERVAL + ")"][all_keys[-2]]["4. close"]
-    
-    print('This is rec_price: ' + rec_price)
-    print('This is last_price: ' + last_price)
+    rec_price = data["Time Series (" + TIME_INTERVAL +
+                     ")"][all_keys[-1]]["4. close"]
+    last_price = data["Time Series (" + TIME_INTERVAL +
+                      ")"][all_keys[-2]]["4. close"]
 
-    prcnt_change = round(((1 - float(rec_price) / float(last_price)) * 100), 2)
+    print("Current time: " + all_keys[-1])
+    print('This is CURRENT price: $' + rec_price)
+    print('This is LAST PRICE: $' + last_price)
+
+    diff = float(rec_price) - float(last_price)
+    prcnt_change = round(((diff / float(last_price)) * 100), 2)
     print(ticker + ' has a percent change of: ' +
           str(prcnt_change) + '% in the last ' + TIME_INTERVAL)
     print("")
 
 
-def for_testing():
+def for_testing_simulator():
     # all_stock_data = data_file()
     for ticker in TICKERS:
-        #get_prcnt_change(ticker, all_stock_data[ticker])
-        TIMES = 50
+        # get_prcnt_change(ticker, all_stock_data[ticker])
+        TIMES=50
         for time in range(1, TIMES):
-            new_data = data_input_simulator(ticker, time)
+            new_data=data_input_simulator(ticker, time)
             get_prcnt_change_new(ticker, new_data)
 
 
-def get_stock_data():
-    all_stock_data = data_file()
+def for_testing_real():
     for ticker in TICKERS:
-        data = {"function": FUNCS[1],
+        TIMES=20
+        for i in range(1, TIMES):
+            get_stock_data()
+            all_stock_data=data_file()
+            get_prcnt_change_new(ticker, all_stock_data[ticker])
+            time.sleep(61)
+
+
+def get_stock_data():
+    all_stock_data=data_file()
+    for ticker in TICKERS:
+        data={"function": FUNCS[1],
                 "symbol": ticker,
                 "interval": TIME_INTERVAL,
                 "datatype": "json",
                 "apikey": API_KEY}
-        response = requests.get(API_URL, data)
-        data = response.json()
-        all_stock_data[ticker] = data
+        response=requests.get(API_URL, data)
+        data=response.json()
+        all_stock_data[ticker]=data
         print('Retrieved ' + ticker)
     data_file(all_stock_data)
 
 
 def data_file(data=None):
     if not data:  # if it is to be read
-        raw_data = open(
+        raw_data=open(
             'json_data.json', 'r')
-        data = json.load(raw_data)
+        data=json.load(raw_data)
         raw_data.close()
         return data
     else:  # if it is write
-        json_data = open(
+        json_data=open(
             'json_data.json', 'w')
         json_data.write(json.dumps(data, indent=2, sort_keys=True))
         json_data.close()
         return
 
 
-
 def data_input_simulator(ticker, data_amount):
-    raw_data = open(
+    raw_data=open(
         'json_data.json', 'r')
-    data = json.load(raw_data)
+    data=json.load(raw_data)
     raw_data.close()
-    all_keys = sorted(
+    all_keys=sorted(
         list(data[ticker]["Time Series (" + TIME_INTERVAL + ")"].keys()))
-    need_keys = all_keys[0:data_amount]
-    to_ret = {"Meta Data": data[ticker]["Meta Data"], "Time Series (" + TIME_INTERVAL + ")": {
+    need_keys=all_keys[0:data_amount]
+    to_ret={"Meta Data": data[ticker]["Meta Data"], "Time Series (" + TIME_INTERVAL + ")": {
         date: data[ticker]["Time Series (" + TIME_INTERVAL + ")"][date] for date in need_keys}}
     # print(to_ret)
     return to_ret
@@ -129,4 +143,4 @@ def data_input_simulator(ticker, data_amount):
 #     time.sleep(61)
 
 # get_stock_data()
-for_testing()
+for_testing_real()
