@@ -8,7 +8,7 @@ API_KEY = "CU6GB0TZL1ZURLJY"
 TIME_INTERVAL_TIME = 1
 TIME_INTERVAL = str(TIME_INTERVAL_TIME) + "min"
 FUNCS = ["GLOBAL_QUOTE", "TIME_SERIES_INTRADAY"]
-TICKERS = ["GOOGL"]
+TICKERS = ["SNAP"]
 
 
 def get_prcnt_change(ticker, data):
@@ -87,10 +87,12 @@ def for_testing_simulator():
 
 def for_testing_real():
     for ticker in TICKERS:
-        TIMES = 20
+        TIMES = 21
         for i in range(1, TIMES):
             t = datetime.datetime.utcnow()
-            sleeptime = (TIME_INTERVAL_TIME * 60) - (t.second + t.microsecond/1000000.0) # waits exactly till the next minute to run
+            # waits exactly till the next minute to run
+            sleeptime = (TIME_INTERVAL_TIME * 60) - \
+                (t.second + t.microsecond/1000000.0)
             time.sleep(sleeptime)
 
             get_stock_data()
