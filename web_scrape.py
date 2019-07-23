@@ -18,12 +18,23 @@ total_loss = 0
 class algorithms:
     def __init__(self, ticker):
         self.ticker = ticker
-        pass
 
     def basic(self, price, volume, time, prcnt_chng):
         if prcnt_chng > 1:
             stocks_bought[self.ticker].buy(time, price, volume)
             print("BUYING")
+
+        all_times = list(stocks_bought[self.ticker].holds.keys())
+        if len(all_times) >= 1:
+            for t in all_times:
+                print('this is t ' + t)
+                bought_price = stocks_bought[self.ticker].holds[t][0]
+                diff = float(price) - float(bought_price)
+                chng_since_bought = round(
+                    ((diff / float(bought_price)) * 100), 2)
+                if chng_since_bought > 1 or chng_since_bought < -1:
+                    stocks_bought[self.ticker].sell(t, price)
+
         return
 
 
@@ -31,17 +42,24 @@ class stock:
     def __init__(self, ticker):
         self.ticker = ticker
         # the time volume and price a stock was bought for
+        # time : [price, volume, value]
         self.holds = {}
 
     def buy(self, time, price, volume):
-        self.holds[time] = [price, volume]
+        print('value: ' + price * volume)
+        self.holds[time] = [price, volume, price * volume]
         print(self.holds)
 
-    def sell(self, time):
-        price = self.holds[0]
-        volume = self.holds[1]
+    def sell(self, time, price):
+        # price = self.holds[time][0]
+        volume = self.holds[time][1]
+        print(volume)
+        final_value = self.holds[time][2] - (price * volume)
+        if final_value > 0:
+            total_gain += final_value
+        else:
+            total_loss += final_value
         del self.holds[time]
-        pass
 
 
 class actions:
@@ -98,6 +116,8 @@ class tests:
                 print(str(i) + ' out of 76')
                 print("")
             print(stocks_bought)
+            print("total gain: " + total_gain)
+            print("total loss: " + total_loss)
 
     def for_testing_real(self):
         for ticker in TICKERS:
@@ -120,7 +140,7 @@ class tests:
 
 class data_related:
     def __init__(self):
-        self.file_name = 'json_data.json'
+        self.file_name = 'stock_data.json'
 
     def get_stock_data(self):
         all_stock_data = self.data_file()
