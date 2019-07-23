@@ -5,14 +5,13 @@ import time
 
 API_URL = "https://www.alphavantage.co/query"
 API_KEY = "CU6GB0TZL1ZURLJY"
-TIME_INTERVAL_TIME = 5
+TIME_INTERVAL_TIME = 1
 TIME_INTERVAL = str(TIME_INTERVAL_TIME) + "min"
 FUNCS = ["GLOBAL_QUOTE", "TIME_SERIES_INTRADAY"]
-TICKERS = ["LIFE"]
-
+TICKERS = ["EURUSD"]
+NUM = []
 stocks_bought = {}
-total_gain = 0
-total_loss = 0
+
 
 
 class algorithms:
@@ -20,22 +19,25 @@ class algorithms:
         self.ticker = ticker
 
     def basic(self, price, volume, time, prcnt_chng):
-        if prcnt_chng > 1:
+        if prcnt_chng > 0.2:
             stocks_bought[self.ticker].buy(time, price, volume)
-            print("BUYING")
+            print("BUYING value: " + str(float(price) * volume))
+
+        # checking whether to sell them or not
 
         all_times = list(stocks_bought[self.ticker].holds.keys())
         if len(all_times) >= 1:
             for t in all_times:
-                print('this is t ' + t)
                 bought_price = stocks_bought[self.ticker].holds[t][0]
-                diff = float(price) - float(bought_price)
+                diff = price - bought_price
                 chng_since_bought = round(
-                    ((diff / float(bought_price)) * 100), 2)
-                if chng_since_bought > 1 or chng_since_bought < -1:
-                    stocks_bought[self.ticker].sell(t, price)
-
-        return
+                    ((diff / bought_price) * 100), 2)
+                    # 0.4 or chng_since_bought < -0.98
+                if chng_since_bought > 0.5 or chng_since_bought < 0:
+                    gain, loss = stocks_bought[self.ticker].sell(t, price)
+                    return gain, loss
+    # def volume_basic(self, price, cap, time)
+    #     return None
 
 
 class stock:
@@ -46,20 +48,25 @@ class stock:
         self.holds = {}
 
     def buy(self, time, price, volume):
-        print('value: ' + price * volume)
+        NUM.append(1)
+        print('value: ' + str(price * volume))
         self.holds[time] = [price, volume, price * volume]
         print(self.holds)
 
     def sell(self, time, price):
         # price = self.holds[time][0]
+        gain = 0
+        loss = 0
         volume = self.holds[time][1]
         print(volume)
         final_value = self.holds[time][2] - (price * volume)
-        if final_value > 0:
-            total_gain += final_value
-        else:
-            total_loss += final_value
         del self.holds[time]
+        if final_value < 0:
+            gain += abs(final_value)
+        else:
+            loss += final_value
+        return gain, loss
+        
 
 
 class actions:
@@ -95,8 +102,13 @@ class actions:
         temp = self.prcnt_change()
         if temp:
             price, last_price, prcnt_chng = temp
-            volume = 2
-            self.algs.basic(price, volume, self.all_dates[-1], prcnt_chng)
+            volume = 5
+
+            result = self.algs.basic(float(price), volume, self.all_dates[-1], prcnt_chng)
+            if result:
+                gain, loss = result
+                return gain, loss
+            return None
 
 
 class tests:
@@ -104,20 +116,30 @@ class tests:
         pass
 
     def for_testing_simulator(self):
+        total_gain = 0
+        total_loss = 0
         for ticker in TICKERS:
             stocks_bought[ticker] = stock(ticker)
-            TIMES = 77
+            TIMES = 384
             for i in range(1, TIMES):
                 data_stuff = data_related()
                 new_data = data_stuff.data_input_simulator(ticker, i)
                 commands = actions(new_data, ticker)
                 # commands.prcnt_change()
-                commands.send_to_alg()
-                print(str(i) + ' out of 76')
+                temp = commands.send_to_alg()
+                if temp:
+                    gain, loss = temp
+                    total_gain += gain
+                    total_loss += loss
+                
+                print(str(i) + ' out of ' + str(TIMES))
                 print("")
-            print(stocks_bought)
-            print("total gain: " + total_gain)
-            print("total loss: " + total_loss)
+            print(stocks_bought[TICKERS[0]].holds)
+            print("total gain: " + str(total_gain))
+            print("total loss: " + str(total_loss))
+            print("total profit: " + str(total_gain - total_loss))
+            print(len(NUM))
+            
 
     def for_testing_real(self):
         for ticker in TICKERS:
@@ -148,6 +170,7 @@ class data_related:
             data = {"function": FUNCS[1],
                     "symbol": ticker,
                     "interval": TIME_INTERVAL,
+                    "outputsize": "full",
                     "datatype": "json",
                     "apikey": API_KEY}
             response = requests.get(API_URL, data)
@@ -183,11 +206,12 @@ class data_related:
         # print(to_ret)
         return to_ret
 
+# for data retrieval
+b = data_related()
+b.get_stock_data()
 
 # for testing
 c = tests()
 c.for_testing_simulator()
 
-# # for data retrieval
-# b = data_related()
-# b.get_stock_data()
+
