@@ -5,7 +5,7 @@ import time
 
 API_URL = "https://www.alphavantage.co/query"
 API_KEY = "CU6GB0TZL1ZURLJY"
-TIME_INTERVAL_TIME = 1
+TIME_INTERVAL_TIME = 5
 TIME_INTERVAL = str(TIME_INTERVAL_TIME) + "min"
 FUNCS = ["GLOBAL_QUOTE", "TIME_SERIES_INTRADAY"]
 TICKERS = ["EURUSD"]
@@ -19,7 +19,7 @@ class algorithms:
         self.ticker = ticker
 
     def basic(self, price, volume, time, prcnt_chng):
-        if prcnt_chng > 0.2:
+        if prcnt_chng > 0.01:
             stocks_bought[self.ticker].buy(time, price, volume)
             print("BUYING value: " + str(float(price) * volume))
 
@@ -206,9 +206,9 @@ class data_related:
         # print(to_ret)
         return to_ret
 
-# for data retrieval
-b = data_related()
-b.get_stock_data()
+# # for data retrieval
+# b = data_related()
+# b.get_stock_data()
 
 # for testing
 c = tests()
