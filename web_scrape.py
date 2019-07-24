@@ -5,7 +5,7 @@ import time
 
 API_URL = "https://www.alphavantage.co/query"
 API_KEY = "CU6GB0TZL1ZURLJY"
-TIME_INTERVAL_TIME = 5
+TIME_INTERVAL_TIME = 1
 TIME_INTERVAL = str(TIME_INTERVAL_TIME) + "min"
 FUNCS = ["GLOBAL_QUOTE", "TIME_SERIES_INTRADAY"]
 TICKERS = ["EURUSD"]
@@ -19,7 +19,7 @@ class algorithms:
         self.ticker = ticker
 
     def basic(self, price, volume, time, prcnt_chng):
-        if prcnt_chng > 0.01:
+        if prcnt_chng > 0.05:
             stocks_bought[self.ticker].buy(time, price, volume)
             print("BUYING value: " + str(float(price) * volume))
 
@@ -33,9 +33,16 @@ class algorithms:
                 chng_since_bought = round(
                     ((diff / bought_price) * 100), 2)
                     # 0.4 or chng_since_bought < -0.98
-                if chng_since_bought > 0.5 or chng_since_bought < 0:
+                if chng_since_bought > 3 or chng_since_bought < -0.98:
                     gain, loss = stocks_bought[self.ticker].sell(t, price)
                     return gain, loss
+    
+    def short(self, price, volume, time, prcnt_chng):
+        rtrn = self.basic(price, volume, time, prcnt_chng)
+        if rtrn:
+            loss, gain = rtrn
+            return gain, loss # switched gain and loss as it is a short
+
     # def volume_basic(self, price, cap, time)
     #     return None
 
@@ -102,9 +109,9 @@ class actions:
         temp = self.prcnt_change()
         if temp:
             price, last_price, prcnt_chng = temp
-            volume = 5
+            volume = 25
 
-            result = self.algs.basic(float(price), volume, self.all_dates[-1], prcnt_chng)
+            result = self.algs.short(float(price), volume, self.all_dates[-1], prcnt_chng)
             if result:
                 gain, loss = result
                 return gain, loss
@@ -120,7 +127,7 @@ class tests:
         total_loss = 0
         for ticker in TICKERS:
             stocks_bought[ticker] = stock(ticker)
-            TIMES = 384
+            TIMES = 6747
             for i in range(1, TIMES):
                 data_stuff = data_related()
                 new_data = data_stuff.data_input_simulator(ticker, i)
@@ -205,13 +212,30 @@ class data_related:
             date: data[ticker]["Time Series (" + TIME_INTERVAL + ")"][date] for date in need_keys}}
         # print(to_ret)
         return to_ret
+    
+    def count_dates(self, ticker):
+        raw_data = open(
+            self.file_name, 'r')
+        data = json.load(raw_data)
+        raw_data.close()
+        all_keys = sorted(
+            list(data[ticker]["Time Series (" + TIME_INTERVAL + ")"].keys()))
+        print(len(all_keys))
+
+
 
 # # for data retrieval
 # b = data_related()
 # b.get_stock_data()
 
-# for testing
+# # for counting keys
+# b = data_related()
+# b.count_dates(TICKERS[0])
+
+
+# #for testing
 c = tests()
 c.for_testing_simulator()
+
 
 
